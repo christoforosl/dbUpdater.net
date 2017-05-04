@@ -22,19 +22,16 @@ class ORADBUpdater : DBUpdater {
 
 	protected internal override Int32 getVersionAndLockTable() {
 
-		IDataReader rs = default(IDataReader);
-		Int32 dbversion = default(Int32);
-
-		rs = dbconn.getDataReader("SELECT version from DatabaseVersion ORDER BY VERSION DESC FOR UPDATE NOWAIT");
-		//lock table exclusively
-		if (rs.Read()) {
-			dbversion = Convert.ToInt32(rs[0]);
-		} else {
-			throw new ApplicationException("No Database file version info found.");
+		using (IDbCommand icomm = dbconn.CreateCommand()) {
+			icomm.CommandText = "SELECT version from DatabaseVersion ORDER BY VERSION DESC FOR UPDATE NOWAIT";
+			using (IDataReader rs = icomm.ExecuteReader()) {
+				if (rs.Read()) {
+					return Convert.ToInt32(rs[0]);
+				} else {
+					throw new ApplicationException("No Database file version info found.");
+				}
+			}
 		}
-
-		dbconn.closeDataReader(rs);
-		return dbversion;
 
 	}
 
@@ -43,7 +40,7 @@ class ORADBUpdater : DBUpdater {
 internal class MSSQLDBUpdater : DBUpdater {
 
 	protected internal override string getSQLCommandSeparator() {
-		return  "\ngo\n";
+		return "\ngo\n";
 	}
 
 	protected internal override string getSQLCommandFileName(int iVersion) {
@@ -54,22 +51,22 @@ internal class MSSQLDBUpdater : DBUpdater {
 
 	protected internal override Int32 getVersionAndLockTable() {
 
-		IDataReader rs = default(IDataReader);
-		Int32 dbversion = default(Int32);
+		using (IDbCommand icomm = dbconn.CreateCommand()) {
+			// the following creates the DatabaseVersion table if it does not exist
+			icomm.CommandText = "if not exists(select * from sysobjects where id=object_id('DatabaseVersion'))CREATE TABLE [dbo].[DatabaseVersion]([version] [int] NOT NULL,[VersionDate] [datetime] NOT NULL DEFAULT (getdate()))";
+			icomm.ExecuteNonQuery();
 
-		// the following creates the DatabaseVersion table if it does not exist
-		dbconn.executeSQL("if not exists(select * from sysobjects where id=object_id('DatabaseVersion'))CREATE TABLE [dbo].[DatabaseVersion]([version] [int] NOT NULL,[VersionDate] [datetime] NOT NULL DEFAULT (getdate()))");
-
-		rs = dbconn.getDataReader("SELECT isnull(max(version), 0) from DatabaseVersion WITH (TABLOCKX)");
-		//lock table exclusively
-		if (rs.Read()) {
-			dbversion = Convert.ToInt32(rs[0]);
-		} else {
-			throw new ApplicationException("No Database file version info found.");
+			icomm.CommandText = "SELECT isnull(max(version), 0) from DatabaseVersion WITH (TABLOCKX)";
+			using (IDataReader rs = icomm.ExecuteReader()) {
+				if (rs.Read()) {
+					return Convert.ToInt32(rs[0]);
+				} else {
+					throw new ApplicationException("No Database file version info found.");
+				}
+			}
 		}
 
-		dbconn.closeDataReader(rs);
-		return dbversion;
+
 
 	}
 
@@ -165,18 +162,16 @@ public abstract class DBUpdater {
 
 
 	private void upgradeDatabase() {
-		
+
 		string myerrprefix = null;
 		int i = 0;
-		
+
 		object oLock = new object();
-		Int32 dbversion = default(Int32);
-		string dbName = null;
 
 		System.Threading.Monitor.Enter(oLock);
 
 		try {
-			dbversion = this.getVersionAndLockTable();
+			Int32 dbversion = this.getVersionAndLockTable();
 
 			if (dbversion == codeDatabaseVersion) {
 				//good!
@@ -188,10 +183,11 @@ public abstract class DBUpdater {
 			} else {
 				if (string.IsNullOrEmpty(this.backupSQLStatement) == false) {
 					string sqlBackup = string.Format(this.backupSQLStatement, Convert.ToString(dbversion), Convert.ToString(codeDatabaseVersion));
+
 					IDbCommand cmd = dbconn.CreateCommand();
-					cmd.CommandText=sqlBackup;
+					cmd.CommandText = sqlBackup;
 					cmd.ExecuteNonQuery();
-					
+
 				}
 
 				myerrprefix = "Error upgrading to version [" + codeDatabaseVersion + "]: ";
@@ -199,44 +195,53 @@ public abstract class DBUpdater {
 				//we have the codeDatabaseVersion constant
 				//and we compare it with dbversion. the version stored
 				//in the database.  If dbversion is less than codeDatabaseVersion
-
+				string dbName = dbconn.Database;
 				while (dbversion < codeDatabaseVersion) {
 					string scriptFile = this.getSQLCommandFileName(Convert.ToInt16(dbversion));
 					string sqlFile = getResourceFileText(scriptFile, this.assemblyName);
 					string[] arrSQL = sqlFile.Split(new[] { this.getSQLCommandSeparator() }, StringSplitOptions.RemoveEmptyEntries);
 
-					
-					dbName = dbconn.Database;
 					for (i = 0; i <= arrSQL.Length; i++) {
-						
+
 						string execSQL = arrSQL[i].Trim();
 
 						if (!string.IsNullOrEmpty(arrSQL[i].Trim().Replace("\n", ""))) {
-							
-							IDbCommand cmd = dbconn.CreateCommand();
-							cmd.CommandText = execSQL;
-							cmd.ExecuteNonQuery();
+							using (IDbCommand cmd = dbconn.CreateCommand()) {
+								try {
+									cmd.CommandText = execSQL;
+									cmd.ExecuteNonQuery();
+								} catch (Exception ex) {
+									string errMsg = scriptFile + ":Error Updating database \"" + dbName + "\" to version " + dbversion + "\n" + ex.Message + "\n" + ex.StackTrace;
+									throw new ApplicationException(errMsg);
+								}
+							}
 						}
-					}
 
-					if (VersionUpgradeCompleted != null) {
-						VersionUpgradeCompleted(dbversion);
-					}
-					dbversion = dbversion + 1;
+						if (VersionUpgradeCompleted != null) {
+							VersionUpgradeCompleted(dbversion);
+						}
+						dbversion = dbversion + 1;
 
-					dbconn.executeSQL("INSERT INTO DatabaseVersion (version) VALUES ('" + dbversion + "') ");
-	
+						using (IDbCommand cmd = dbconn.CreateCommand()) {
+							try {
+								cmd.CommandText = "INSERT INTO DatabaseVersion (version) VALUES ('" + dbversion + "') ";
+								cmd.ExecuteNonQuery();
+							} catch (Exception ex) {
+								string errMsg = scriptFile + ":Error in INSERT INTO DatabaseVersion table:\n" + ex.Message + "\n" + ex.StackTrace;
+								throw new ApplicationException(errMsg);
+							}
+						}
+						
+
+					}
 				}
 			}
 
 
-		} catch (Exception ex) {
-			string errMsg = scriptFile + Constants.vbCrLf + "Error Updating database \"" + dbName + "\" to version " + dbversion + Constants.vbCrLf + ex.Message + Constants.vbCrLf + ex.StackTrace;
-			//ErrorLogging.addError(errMsg, "", "", ErrorLogging.enumErrType.ERR_INFO)
-			throw new ApplicationException(errMsg);
+
 
 		} finally {
-			
+
 			System.Threading.Monitor.Exit(oLock);
 		}
 
@@ -259,7 +264,7 @@ public abstract class DBUpdater {
 		dbu.codeDatabaseVersion = _dbversion;
 		dbu.assemblyName = _assembly;
 		dbu.encoding = (System.Text.Encoding)(encoding == null ? System.Text.Encoding.UTF8 : encoding);
-		
+
 		dbu.upgradeDatabase();
 
 	}

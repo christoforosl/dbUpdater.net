@@ -1,0 +1,4 @@
+C:\Users\chris\Documents\GitHub\dbUpdater.net\dbUpdater.net\dbUpdater.net\bin\Debug\dbUpdater.net.dll
+C:\Users\chris\Documents\GitHub\dbUpdater.net\dbUpdater.net\dbUpdater.net\bin\Debug\dbUpdater.net.pdb
+C:\Users\chris\Documents\GitHub\dbUpdater.net\dbUpdater.net\dbUpdater.net\obj\Debug\dbUpdater.net.dll
+C:\Users\chris\Documents\GitHub\dbUpdater.net\dbUpdater.net\dbUpdater.net\obj\Debug\dbUpdater.net.pdb
