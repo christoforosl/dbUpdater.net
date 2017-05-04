@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbUpdater.net", "dbUpdater.net\dbUpdater.net.csproj", "{F8FB44E3-F245-4D98-BA31-F683C74B280D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F8FB44E3-F245-4D98-BA31-F683C74B280D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8FB44E3-F245-4D98-BA31-F683C74B280D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8FB44E3-F245-4D98-BA31-F683C74B280D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8FB44E3-F245-4D98-BA31-F683C74B280D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
