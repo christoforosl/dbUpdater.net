@@ -45,7 +45,7 @@ internal class MSSQLDBUpdater : DBUpdater {
 
 	protected internal override string getSQLCommandFileName(int iVersion) {
 
-		return "dbUpdate_" + Convert.ToString(iVersion) + "_MS.SQL";
+		return "dbUpdate_" + Convert.ToString(iVersion) + "_ms.sql";
 
 	}
 
@@ -65,11 +65,7 @@ internal class MSSQLDBUpdater : DBUpdater {
 				}
 			}
 		}
-
-
-
 	}
-
 }
 
 
@@ -79,11 +75,10 @@ internal class MSSQLDBUpdater : DBUpdater {
 /// <remarks>
 /// Requirements:
 /// <ol>
-/// <li>Create a table in your database called <b>sysDatabaseVersion</b>
+/// <li>Create a table in your database called <b>DatabaseVersion</b>
 /// with 2 columns: 
 /// <ul><li>DatabaseVersion, integer</li>
-/// <li>VersionDate, datetime, default: current date (getDate() in MSSQL, 
-/// sysdate in Oracle.</li>
+/// <li>VersionDate, datetime, default: current date (getDate() in MSSQL, sysdate in Oracle.</li>
 /// </ul>
 /// </li>
 /// <li>
@@ -103,13 +98,12 @@ internal class MSSQLDBUpdater : DBUpdater {
 /// </li>
 /// </ol>
 /// 
-/// At your system startup, create a new DBUtils object, <see cref="org.model.lib.db.DBUtils">DBUtils object</see>, 
-/// and call public shared sub DBUpdater.dbUpdateVersion. See also <seealso cref="DBUpdater.dbUpdateVersion">dbUpdateVersion</seealso>
+/// At your system startup, open a Database connection and call public shared sub DBUpdater.dbUpdateVersion. See also <seealso cref="DBUpdater.dbUpdateVersion">dbUpdateVersion</seealso>
 /// dbUpdateVersion works by comparing the application database version with the database version stored in
-/// the sysDatabaseVersion table.  If the application database version is greater than the latest version number 
-/// in sysDatabaseVersion, then a loop is executed while  [sysDatabaseVersion] &lt; [application database version]
+/// the DatabaseVersion table.  If the application database version is greater than the latest version number 
+/// in DatabaseVersion, then a loop is executed while  [DatabaseVersion] &lt; [application database version]
 /// opening sql script files and executing the commands for each version.
-/// After each version sql file is done, a new row is inserted in table sysDatabaseVersion, updating the version,
+/// After each version sql file is done, a new row is inserted in table DatabaseVersion, updating the version,
 /// until the versions come to the same lebel.
 /// </remarks>
 public abstract class DBUpdater {
@@ -136,8 +130,6 @@ public abstract class DBUpdater {
 	private static Stream getResourceStream(string resname, Assembly assembly) {
 
 		string resourceName = assembly.GetManifestResourceNames().FirstOrDefault(xc => { return xc.EndsWith("." + resname); });
-
-
 		return assembly.GetManifestResourceStream(resourceName);
 
 	}
@@ -161,7 +153,7 @@ public abstract class DBUpdater {
 	}
 
 
-	private void upgradeDatabase() {
+	public void upgradeDatabase() {
 
 		string myerrprefix = null;
 		int i = 0;
@@ -231,7 +223,7 @@ public abstract class DBUpdater {
 								throw new ApplicationException(errMsg);
 							}
 						}
-						
+
 
 					}
 				}
@@ -246,32 +238,6 @@ public abstract class DBUpdater {
 		}
 
 	}
-
-	#region "Public class interface"
-
-	/// <summary>
-	/// Creates an updater class instance and brings the database to the target version
-	/// </summary>
-	/// <param name="dbconn">Database connection to your database</param>
-	/// <param name="_dbversion">The target version</param>
-	/// <param name="_backupSQLStatement">SQL to execute before the upgrade to backup database</param>
-	/// <param name="_assembly">the assembly that contains the embedded resource sql files</param>
-
-	public static void dbUpdateVersion(IDbConnection dbconn, int _dbversion, Assembly _assembly, System.Text.Encoding encoding = null, string _backupSQLStatement = "") {
-		DBUpdater dbu = null;
-
-		dbu.dbconn = dbconn;
-		dbu.codeDatabaseVersion = _dbversion;
-		dbu.assemblyName = _assembly;
-		dbu.encoding = (System.Text.Encoding)(encoding == null ? System.Text.Encoding.UTF8 : encoding);
-
-		dbu.upgradeDatabase();
-
-	}
-
-	#endregion
-
-
 
 }
 

@@ -3,7 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbUpdater.net", "dbUpdater.net\dbUpdater.net.csproj", "{F8FB44E3-F245-4D98-BA31-F683C74B280D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbupdater.tests", "dbupdater.tests\dbupdater.tests.csproj", "{E68D5AE3-DA1E-4885-AEE9-A5D599D63A31}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E4F95088-6E94-452E-9B23-F1019EA9DB8D}"
+	ProjectSection(SolutionItems) = preProject
+		dbUpdater.net.vsmdi = dbUpdater.net.vsmdi
+		Local.testsettings = Local.testsettings
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
 Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = dbUpdater.net.vsmdi
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -13,6 +25,10 @@ Global
 		{F8FB44E3-F245-4D98-BA31-F683C74B280D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8FB44E3-F245-4D98-BA31-F683C74B280D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8FB44E3-F245-4D98-BA31-F683C74B280D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E68D5AE3-DA1E-4885-AEE9-A5D599D63A31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E68D5AE3-DA1E-4885-AEE9-A5D599D63A31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E68D5AE3-DA1E-4885-AEE9-A5D599D63A31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E68D5AE3-DA1E-4885-AEE9-A5D599D63A31}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
